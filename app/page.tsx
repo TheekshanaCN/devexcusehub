@@ -4,16 +4,23 @@ import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "next-themes";
+import ExcuseGenerator from "@/components/ExcuseGenerator";
 
 export default function Home() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <main className="min-h-screen bg-background">
+        {/* Header */}
         <Header />
-        <h2 className="text-2xl font-bold text-foreground mb-4">
-          Welcome to Dev Excuse Hub!
-        </h2>
-        <p className="text-muted-foreground mb-6">Dev Excuse Hub</p>
+
+        <div className="container mx-auto px-4 py-8 space-y-12">
+          {/* Excuse Generator */}
+          <section className="py-8">
+            <ExcuseGenerator />
+          </section>
+        </div>
+
+        {/* Footer */}
         <Footer />
       </main>
     </ThemeProvider>
