@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { ThemeProvider } from "next-themes";
 import ExcuseGenerator from "@/components/ExcuseGenerator";
 import ExcuseSubmissionForm from "@/components/ExcuseSubmissionForm";
+import ExcuseLeaderboard from "@/components/ExcuseLeaderboard";
 
 export default function Home() {
   const handleExcuseSubmitted = (data: any) => {
@@ -28,14 +29,20 @@ export default function Home() {
 
         {/* Two Column Layout for Submission Form and Leaderboard */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-4 flex justify-center">
+          {/* Excuse Submission Form */}
+          <div className="lg:col-span-4 flex justify-center max-h-[500px] overflow-y-auto">
             <ExcuseSubmissionForm onSubmit={handleExcuseSubmitted} />
+          </div>
+
+          {/* Excuse Leaderboard */}
+          <div className="lg:col-span-8">
+            <ExcuseLeaderboard />
           </div>
         </section>
 
         {/* Footer */}
         <Footer />
-      <Toaster />
+        <Toaster />
       </main>
     </ThemeProvider>
   );
