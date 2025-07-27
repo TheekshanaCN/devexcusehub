@@ -24,9 +24,6 @@ const ExcuseGenerator = ({ onExcuseGenerated }: ExcuseGeneratorProps) => {
   const { toast } = useToast();
   const { width, height } = useWindowSize();
 
-  // Fun emoji reactions based on excuse type
-  const emojiReactions = ["🤔", "🤯", "😅", "🙈", "👀", "🫠", "💫", "🤷‍♂️", "🧙‍♂️"];
-
   useEffect(() => {
     if (animateExcuse) {
       const timer = setTimeout(() => {
@@ -81,41 +78,32 @@ const ExcuseGenerator = ({ onExcuseGenerated }: ExcuseGeneratorProps) => {
     setMood("happy");
 
     try {
-      // Simulate "thinking" time for more dramatic effect
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call the API to generate an excuse
+      const response = await fetch('/api/generate-excuse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: userProblem,
+          userId: "mock-user-id" // Using mock user ID as specified
+        })
+      });
 
-      const problemKeywords = userProblem.toLowerCase();
-      let newExcuse = "";
-      let reaction = emojiReactions[Math.floor(Math.random() * emojiReactions.length)];
-
-      // More elaborate and funnier excuses
-      if (problemKeywords.includes("slow") || problemKeywords.includes("performance")) {
-        newExcuse = `Our ${Math.random() > 0.5 ? "blockchain-powered" : "AI-driven"} architecture is currently ${Math.random() > 0.5 ? "reticulating splines" : "calculating the meaning of life"}. Performance will improve in ${Math.floor(Math.random() * 24) + 1} hours. ${reaction}`;
-      } else if (problemKeywords.includes("crash") || problemKeywords.includes("error")) {
-        newExcuse = `That's not a bug, it's a ${Math.random() > 0.5 ? "rare feature" : "undocumented capability"}! Our ${Math.random() > 0.5 ? "quantum" : "blockchain"} subsystem ${Math.random() > 0.5 ? "predicted you'd try that" : "is protecting you from yourself"}. ${reaction}`;
-      } else if (problemKeywords.includes("design") || problemKeywords.includes("ui")) {
-        newExcuse = `The ${Math.random() > 0.5 ? "brutalist" : "post-modern"} design language was ${Math.random() > 0.5 ? "approved by our UX shaman" : "blessed by Steve Jobs' ghost"}. Studies show it increases ${Math.random() > 0.5 ? "user enlightenment" : "digital wellbeing"} by ${Math.floor(Math.random() * 90) + 10}%. ${reaction}`;
-      } else if (problemKeywords.includes("data") || problemKeywords.includes("database")) {
-        newExcuse = `Our ${Math.random() > 0.5 ? "blockchain" : "NoSQL"} database is currently ${Math.random() > 0.5 ? "meditating" : "practicing mindfulness"} to achieve ${Math.random() > 0.5 ? "eventual consistency" : "database nirvana"}. Try again after it reaches enlightenment. ${reaction}`;
-      } else if (problemKeywords.includes("api") || problemKeywords.includes("service")) {
-        newExcuse = `The ${Math.random() > 0.5 ? "web3" : "serverless"} API is currently ${Math.random() > 0.5 ? "negotiating with its microservices" : "attending a virtual team-building exercise"}. It'll respond when it feels ready. ${reaction}`;
-      } else if (problemKeywords.includes("test") || problemKeywords.includes("qa")) {
-        newExcuse = `Our ${Math.random() > 0.5 ? "AI-powered" : "blockchain-based"} testing framework ${Math.random() > 0.5 ? "predicted this would never happen" : "was on its coffee break"}. We'll ${Math.random() > 0.5 ? "train the model better" : "add more blockchain"} next sprint. ${reaction}`;
-      } else {
-        const genericExcuses = [
-          `Our ${Math.random() > 0.5 ? "AI overlords" : "code monkeys"} are still ${Math.random() > 0.5 ? "debugging the matrix" : "polishing the crystals"}. ${reaction}`,
-          `The ${Math.random() > 0.5 ? "quantum" : "blockchain"} bits got ${Math.random() > 0.5 ? "entangled" : "minted"} wrong. We're ${Math.random() > 0.5 ? "reinitializing the universe" : "burning some NFTs"} to fix it. ${reaction}`,
-          `This is actually ${Math.random() > 0.5 ? "an avant-garde error message" : "performance art"} about ${Math.random() > 0.5 ? "modern software development" : "digital alienation"}. ${reaction}`,
-          `Our ${Math.random() > 0.5 ? "server hamsters" : "cloud fairies"} are ${Math.random() > 0.5 ? "on strike" : "in training"}. Management is ${Math.random() > 0.5 ? "negotiating" : "meditating"} with them. ${reaction}`,
-          `The ${Math.random() > 0.5 ? "full moon" : "Mercury retrograde"} is affecting our ${Math.random() > 0.5 ? "quantum bits" : "agile sprints"}. Try again ${Math.random() > 0.5 ? "after the eclipse" : "during Jupiter alignment"}. ${reaction}`
-        ];
-        newExcuse = genericExcuses[Math.floor(Math.random() * genericExcuses.length)];
+      if (!response.ok) {
+        throw new Error('Failed to generate excuse');
       }
 
-      setCurrentExcuse(newExcuse);
-      setAnimateExcuse(true);
-      setShowConfetti(true);
-      onExcuseGenerated?.(newExcuse);
+      const data = await response.json();
+
+      if (data.excuse && data.excuse.text) {
+        setCurrentExcuse(data.excuse.text);
+        setAnimateExcuse(true);
+        setShowConfetti(true);
+        onExcuseGenerated?.(data.excuse.text);
+      } else {
+        throw new Error('Invalid excuse format');
+      }
     } catch (error) {
       console.error("Error generating excuse:", error);
       toast({

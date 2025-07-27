@@ -25,92 +25,14 @@ interface ExcuseLeaderboardProps {
   className?: string;
 }
 
-// Mock data for excuses
-const MOCK_EXCUSES: Excuse[] = [
-  {
-    id: "1",
-    excuse: "My dog ate my homework... literally this time!",
-    author: "student123",
-    upvotes: 42,
-    downvotes: 3,
-  },
-  {
-    id: "2",
-    excuse: "I was abducted by aliens and they wiped my memory of the task.",
-    author: "xfilesfan",
-    upvotes: 35,
-    downvotes: 8,
-  },
-  {
-    id: "3",
-    excuse: "I was too busy saving the world from an alien invasion.",
-    author: "superhero",
-    upvotes: 28,
-    downvotes: 12,
-  },
-  {
-    id: "4",
-    excuse: "My internet was down because squirrels chewed through the cable.",
-    author: "techissues",
-    upvotes: 25,
-    downvotes: 5,
-  },
-  {
-    id: "5",
-    excuse: "I was stuck in a time loop reliving the same day.",
-    author: "groundhogday",
-    upvotes: 20,
-    downvotes: 15,
-  },
-  {
-    id: "6",
-    excuse: "My cat walked across my keyboard and deleted everything.",
-    author: "catlover",
-    upvotes: 18,
-    downvotes: 2,
-  },
-  {
-    id: "7",
-    excuse: "I was busy fighting a dragon in my backyard.",
-    author: "fantasyfan",
-    upvotes: 15,
-    downvotes: 10,
-  },
-  {
-    id: "8",
-    excuse: "I was learning to code and accidentally hacked into the Pentagon.",
-    author: "hacker",
-    upvotes: 12,
-    downvotes: 8,
-  },
-  {
-    id: "9",
-    excuse: "I was busy inventing a new color.",
-    author: "artist",
-    upvotes: 10,
-    downvotes: 6,
-  },
-  {
-    id: "10",
-    excuse: "I was training for the zombie apocalypse.",
-    author: "prepper",
-    upvotes: 8,
-    downvotes: 4,
-  },
-];
-
 const ExcuseLeaderboard = ({ className = "" }: ExcuseLeaderboardProps) => {
   const [excuses, setExcuses] = useState<Excuse[]>([]);
   const [topExcuses, setTopExcuses] = useState<Excuse[]>([]);
-  const [controversialExcuses, setControversialExcuses] = useState<Excuse[]>(
-    [],
-  );
+  const [controversialExcuses, setControversialExcuses] = useState<Excuse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [sortBy, setSortBy] = useState<"upvotes" | "downvotes" | "score">(
-    "upvotes",
-  );
+  const [sortBy, setSortBy] = useState<"upvotes" | "downvotes" | "score">("upvotes");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalExcuses, setTotalExcuses] = useState<number>(MOCK_EXCUSES.length);
+  const [totalExcuses, setTotalExcuses] = useState<number>(0);
   const itemsPerPage = 6;
   const { toast } = useToast();
 
@@ -125,26 +47,46 @@ const ExcuseLeaderboard = ({ className = "" }: ExcuseLeaderboardProps) => {
     return excuse.upvotes - excuse.downvotes;
   };
 
-  const fetchExcuses = () => {
+  const fetchExcuses = async () => {
     setLoading(true);
     try {
-      // Sort the mock data based on the current sortBy
-      let sortedExcuses = [...MOCK_EXCUSES];
-      
-      if (sortBy === "upvotes") {
-        sortedExcuses.sort((a, b) => b.upvotes - a.upvotes);
-      } else if (sortBy === "downvotes") {
-        sortedExcuses.sort((a, b) => b.downvotes - a.downvotes);
-      } else if (sortBy === "score") {
-        sortedExcuses.sort((a, b) => calculateScore(b) - calculateScore(a));
+      const response = await fetch('/api/excuses');
+      if (!response.ok) {
+        throw new Error('Failed to fetch excuses');
       }
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Transform API data to match our interface
+        const transformedExcuses: Excuse[] = data.data.map((excuse: any) => ({
+          id: excuse._id,
+          excuse: excuse.text,
+          author: "Anonymous", // API doesn't provide author, using default
+          upvotes: excuse.upvoteCount || 0,
+          downvotes: excuse.downvoteCount || 0,
+          score: (excuse.upvoteCount || 0) - (excuse.downvoteCount || 0)
+        }));
 
-      // Paginate the results
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      const paginatedExcuses = sortedExcuses.slice(startIndex, endIndex);
+        setTotalExcuses(transformedExcuses.length);
 
-      setExcuses(paginatedExcuses);
+        // Sort the data based on the current sortBy
+        let sortedExcuses = [...transformedExcuses];
+        
+        if (sortBy === "upvotes") {
+          sortedExcuses.sort((a, b) => b.upvotes - a.upvotes);
+        } else if (sortBy === "downvotes") {
+          sortedExcuses.sort((a, b) => b.downvotes - a.downvotes);
+        } else if (sortBy === "score") {
+          sortedExcuses.sort((a, b) => calculateScore(b) - calculateScore(a));
+        }
+
+        // Paginate the results
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedExcuses = sortedExcuses.slice(startIndex, endIndex);
+
+        setExcuses(paginatedExcuses);
+      }
     } catch (error) {
       console.error("Error fetching excuses:", error);
       toast({
@@ -157,78 +99,115 @@ const ExcuseLeaderboard = ({ className = "" }: ExcuseLeaderboardProps) => {
     }
   };
 
-  const fetchTopExcuses = () => {
+  const fetchTopExcuses = async () => {
     try {
-      // Get top 10 by upvotes
-      const sorted = [...MOCK_EXCUSES].sort((a, b) => b.upvotes - a.upvotes);
-      setTopExcuses(sorted.slice(0, 10));
+      const response = await fetch('/api/excuses');
+      if (!response.ok) {
+        throw new Error('Failed to fetch top excuses');
+      }
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const transformedExcuses: Excuse[] = data.data.map((excuse: any) => ({
+          id: excuse._id,
+          excuse: excuse.text,
+          author: "Anonymous",
+          upvotes: excuse.upvoteCount || 0,
+          downvotes: excuse.downvoteCount || 0
+        }));
+
+        // Get top 10 by upvotes
+        const sorted = [...transformedExcuses].sort((a, b) => b.upvotes - a.upvotes);
+        setTopExcuses(sorted.slice(0, 10));
+      }
     } catch (error) {
       console.error("Error fetching top excuses:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load top excuses. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const fetchControversialExcuses = () => {
+  const fetchControversialExcuses = async () => {
     try {
-      // Get most controversial (highest sum of upvotes and downvotes)
-      const sorted = [...MOCK_EXCUSES].sort(
-        (a, b) => (b.upvotes + b.downvotes) - (a.upvotes + a.downvotes),
-      );
-      setControversialExcuses(sorted.slice(0, 10));
+      const response = await fetch('/api/excuses');
+      if (!response.ok) {
+        throw new Error('Failed to fetch controversial excuses');
+      }
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const transformedExcuses: Excuse[] = data.data.map((excuse: any) => ({
+          id: excuse._id,
+          excuse: excuse.text,
+          author: "Anonymous",
+          upvotes: excuse.upvoteCount || 0,
+          downvotes: excuse.downvoteCount || 0
+        }));
+
+        // Get most controversial (highest sum of upvotes and downvotes)
+        const sorted = [...transformedExcuses].sort(
+          (a, b) => (b.upvotes + b.downvotes) - (a.upvotes + a.downvotes),
+        );
+        setControversialExcuses(sorted.slice(0, 10));
+      }
     } catch (error) {
       console.error("Error fetching controversial excuses:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load controversial excuses. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleVote = async (id: string, voteType: 'up' | 'down') => {
+    try {
+      const response = await fetch('/api/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: "688505bc13b08bbd282b94a8", // Using mock user ID as specified
+          excuseId: id,
+          vote: voteType
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to record vote');
+      }
+
+      // Refresh all data after voting
+      await Promise.all([
+        fetchExcuses(),
+        fetchTopExcuses(),
+        fetchControversialExcuses()
+      ]);
+      
+      toast({
+        title: "Success",
+        description: `Your ${voteType}vote was recorded!`,
+      });
+    } catch (error) {
+      console.error(`Error ${voteType}voting excuse with id: ${id}`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${voteType}vote. Please try again.`,
+        variant: "destructive",
+      });
     }
   };
 
   const handleUpvote = async (id: string) => {
-    try {
-      // Find the excuse and increment upvotes
-      const updatedExcuses = MOCK_EXCUSES.map(excuse => 
-        excuse.id === id ? { ...excuse, upvotes: excuse.upvotes + 1 } : excuse
-      );
-      
-      // Update state with the new data
-      fetchExcuses();
-      fetchTopExcuses();
-      fetchControversialExcuses();
-      
-      toast({
-        title: "Success",
-        description: "Upvote recorded!",
-      });
-    } catch (error) {
-      console.error(`Error upvoting excuse with id: ${id}`, error);
-      toast({
-        title: "Error",
-        description: "Failed to upvote. Please try again.",
-        variant: "destructive",
-      });
-    }
+    await handleVote(id, 'up');
   };
 
   const handleDownvote = async (id: string) => {
-    try {
-      // Find the excuse and increment downvotes
-      const updatedExcuses = MOCK_EXCUSES.map(excuse => 
-        excuse.id === id ? { ...excuse, downvotes: excuse.downvotes + 1 } : excuse
-      );
-      
-      // Update state with the new data
-      fetchExcuses();
-      fetchTopExcuses();
-      fetchControversialExcuses();
-      
-      toast({
-        title: "Success",
-        description: "Downvote recorded!",
-      });
-    } catch (error) {
-      console.error(`Error downvoting excuse with id: ${id}`, error);
-      toast({
-        title: "Error",
-        description: "Failed to downvote. Please try again.",
-        variant: "destructive",
-      });
-    }
+    await handleVote(id, 'down');
   };
 
   const handleNextPage = () => {
