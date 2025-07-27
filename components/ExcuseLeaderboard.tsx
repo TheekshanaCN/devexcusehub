@@ -61,7 +61,7 @@ const ExcuseLeaderboard = ({ className = "" }: ExcuseLeaderboardProps) => {
         const transformedExcuses: Excuse[] = data.data.map((excuse: any) => ({
           id: excuse._id,
           excuse: excuse.text,
-          author: "Anonymous", // API doesn't provide author, using default
+          author: excuse.author || "Anonymous", // API doesn't provide author, using default
           upvotes: excuse.upvoteCount || 0,
           downvotes: excuse.downvoteCount || 0,
           score: (excuse.upvoteCount || 0) - (excuse.downvoteCount || 0)
@@ -111,7 +111,7 @@ const ExcuseLeaderboard = ({ className = "" }: ExcuseLeaderboardProps) => {
         const transformedExcuses: Excuse[] = data.data.map((excuse: any) => ({
           id: excuse._id,
           excuse: excuse.text,
-          author: "Anonymous",
+          author: excuse.author || "Anonymous",
           upvotes: excuse.upvoteCount || 0,
           downvotes: excuse.downvoteCount || 0
         }));
@@ -142,7 +142,7 @@ const ExcuseLeaderboard = ({ className = "" }: ExcuseLeaderboardProps) => {
         const transformedExcuses: Excuse[] = data.data.map((excuse: any) => ({
           id: excuse._id,
           excuse: excuse.text,
-          author: "Anonymous",
+          author: excuse.author || "Anonymous",
           upvotes: excuse.upvoteCount || 0,
           downvotes: excuse.downvoteCount || 0
         }));

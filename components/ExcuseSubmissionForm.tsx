@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import {
@@ -23,61 +23,65 @@ interface ExcuseSubmissionFormProps {
 interface ExcuseFormData {
   excuse: string;
   author: string;
-  category: string;
-}
-
-interface Category {
-  id: number;
-  name: string;
 }
 
 const ExcuseSubmissionForm = ({
   onSubmit = () => {},
 }: ExcuseSubmissionFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const { toast } = useToast();
-
-  // ✅ Use mock category data
-  useEffect(() => {
-    const mockCategories = [
-      { id: 1, name: "general" },
-      { id: 2, name: "frontend" },
-      { id: 3, name: "backend" },
-      { id: 4, name: "devops" },
-      { id: 5, name: "management" },
-    ];
-    setCategories(mockCategories);
-  }, []);
 
   const form = useForm<ExcuseFormData>({
     defaultValues: {
       excuse: "",
       author: "",
-      category: "general",
     },
   });
 
-  // ✅ Simulate fake submission
   const handleSubmit = async (data: ExcuseFormData) => {
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      console.log("Simulated excuse submitted:", data);
+    try {
+      const response = await fetch("/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          excuse: data.excuse,
+          author: data.author,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit excuse");
+      }
+
+      const responseData = await response.json();
+
       onSubmit(data);
       form.reset();
+
       toast({
         title: "🎉 Success!",
         description: (
           <div className="flex items-center gap-2">
             <span className="animate-bounce inline-block">🚀</span>
-            <span>Your excuse has been submitted (mocked)!</span>
+            <span>Your excuse has been submitted!</span>
             <span className="animate-bounce inline-block delay-100">👏</span>
           </div>
         ),
       });
+    } catch (error) {
+      console.error("Error submitting excuse:", error);
+      toast({
+        title: "❌ Error",
+        description: "Failed to submit excuse. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -117,31 +121,6 @@ const ExcuseSubmissionForm = ({
                 <FormLabel>Your Name (Optional)</FormLabel>
                 <FormControl>
                   <Input placeholder="Anonymous Developer" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="category"
-            rules={{ required: "Please select a category" }}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <select
-                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    {...field}
-                  >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name.charAt(0).toUpperCase() +
-                          category.name.slice(1)}
-                      </option>
-                    ))}
-                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>

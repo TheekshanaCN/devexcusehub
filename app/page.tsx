@@ -30,7 +30,7 @@ export default function Home() {
         {/* Two Column Layout for Submission Form and Leaderboard */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Excuse Submission Form */}
-          <div className="lg:col-span-4 flex justify-center max-h-[500px] overflow-y-auto">
+          <div className="lg:col-span-4 flex justify-center max-h-[400px] overflow-y-auto">
             <ExcuseSubmissionForm onSubmit={handleExcuseSubmitted} />
           </div>
 
